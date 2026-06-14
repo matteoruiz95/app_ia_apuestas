@@ -1,0 +1,6 @@
+API_KEYS_AQUI.env
+.streamlit/secrets.toml
+data/*.sqlite
+__pycache__/
+*.pyc
+.env
