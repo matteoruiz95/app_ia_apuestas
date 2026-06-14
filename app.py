@@ -307,31 +307,41 @@ def get_analysis_scope(df: pd.DataFrame, selected_match_nos: list[int] | None = 
 
 
 def render_header() -> None:
-    logo_col, text_col = st.columns([1.1, 5.2], vertical_alignment="center")
-
-    with logo_col:
-        if DUAL_LOGO_PURPLE.exists():
-            st.image(str(DUAL_LOGO_PURPLE), width=190)
-        else:
-            st.markdown("### Dual")
-
-    with text_col:
-        st.markdown(
-            """
-            <div class="dual-hero">
-                <div class="dual-chip">Dual Developments · Mundial 2026 IA Predictor</div>
-                <h1>Predictor IA de fase de grupos</h1>
-                <p>
-                    Plataforma privada para analizar partidos con cuotas, IA, histórico local,
-                    evaluación de resultados y criterios de riesgo. Diseño adaptado a la línea visual
-                    de Dual: blanco, morado y enfoque tecnológico.
+    """
+    Header simple para la pantalla principal.
+    No muestra banner morado grande ni descripción extensa.
+    """
+    st.markdown(
+        """
+        <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding: 8px 0 4px 0;
+        ">
+            <div>
+                <h2 style="
+                    margin: 0;
+                    color: #24113f;
+                    font-weight: 900;
+                    font-size: 30px;
+                    letter-spacing: -0.6px;
+                ">
+                    Predictor Mundial IA
+                </h2>
+                <p style="
+                    margin: 4px 0 0 0;
+                    color: #6b617c;
+                    font-size: 14px;
+                ">
+                    Dashboard de análisis, histórico y evaluación de resultados.
                 </p>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def render_sidebar() -> dict:
     if DUAL_LOGO_PURPLE.exists():
@@ -1143,14 +1153,16 @@ def render_evaluation_tab() -> None:
 
 def main() -> None:
     init_state()
-    render_header()
 
     if not require_login():
         return
 
+    render_header()
     config = render_sidebar()
 
-    tab_dashboard, tab_history, tab_evaluation = st.tabs(["📊 Dashboard", "🗄️ Histórico de análisis", "✅ Evaluación resultados"])
+    tab_dashboard, tab_history, tab_evaluation = st.tabs(
+        ["📊 Dashboard", "🗄️ Histórico de análisis", "✅ Evaluación resultados"]
+    )
 
     with tab_dashboard:
         render_actions(config)
@@ -1162,21 +1174,41 @@ def main() -> None:
         processed = processed_subset(raw_df)
         processed_count = len(processed)
         error_count = 0
+
         if not processed.empty and "analysis_status" in processed.columns:
-            error_count = int((processed["analysis_status"].fillna("").astype(str).str.upper() == "ERROR").sum())
+            error_count = int(
+                (
+                    processed["analysis_status"]
+                    .fillna("")
+                    .astype(str)
+                    .str.upper()
+                    == "ERROR"
+                ).sum()
+            )
 
         if processed_count > 0 and config.get("show_only_analyzed", True):
             df = display_scope(raw_df, only_analyzed=True)
+
             if analyzed_count > 0 and error_count == 0:
                 st.success(f"Mostrando {len(df)} partidos procesados con IA: {analyzed_count} OK.")
             elif analyzed_count > 0 and error_count > 0:
-                st.warning(f"Mostrando {len(df)} partidos procesados con IA: {analyzed_count} OK y {error_count} con error. Revisa error_message.")
+                st.warning(
+                    f"Mostrando {len(df)} partidos procesados con IA: "
+                    f"{analyzed_count} OK y {error_count} con error. Revisa error_message."
+                )
             else:
-                st.error(f"Se intentó ejecutar IA en {processed_count} partidos, pero todos fallaron. Revisa analysis_status y error_message en la tabla.")
+                st.error(
+                    f"Se intentó ejecutar IA en {processed_count} partidos, "
+                    "pero todos fallaron. Revisa analysis_status y error_message en la tabla."
+                )
         else:
             df = raw_df
+
             if processed_count == 0:
-                st.info("Aún no hay partidos procesados con IA. Selecciona partidos en la barra lateral y presiona 'Ejecutar IA en seleccionados'.")
+                st.info(
+                    "Aún no hay partidos procesados con IA. Selecciona partidos en la barra lateral "
+                    "y presiona 'Ejecutar IA en seleccionados'."
+                )
             else:
                 st.info(f"Hay {processed_count} partidos procesados con IA, pero estás viendo todos los partidos.")
 
@@ -1191,7 +1223,8 @@ def main() -> None:
         render_simulation(st.session_state.simulations)
 
         st.warning(
-            "Las predicciones son probabilísticas. No uses esto como garantía de apuesta ni arriesgues dinero que no puedas perder."
+            "Las predicciones son probabilísticas. No uses esto como garantía de apuesta "
+            "ni arriesgues dinero que no puedas perder."
         )
 
     with tab_history:

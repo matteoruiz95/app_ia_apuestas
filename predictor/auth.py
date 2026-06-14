@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import json
 import os
-from pathlib import Path
 from typing import Any
 
 import streamlit as st
@@ -13,9 +12,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 load_dotenv("API_KEYS_AQUI.env")
-
-APP_ROOT = Path(__file__).resolve().parents[1]
-DUAL_LOGO_PURPLE = APP_ROOT / "assets" / "dual_logo_purple.png"
 
 
 def _sha256(text: str) -> str:
@@ -34,17 +30,6 @@ def _safe_json_loads(text: str) -> Any:
 
 
 def _default_users() -> dict[str, str]:
-    """
-    Formato esperado:
-    APP_USERS_JSON={"mateo":"<sha256>","admin":"<sha256>"}
-
-    Alternativa simple:
-    APP_USERNAME=admin
-    APP_PASSWORD=1234
-
-    Recomendado para producción:
-    APP_PASSWORD_HASH=<sha256>
-    """
     users_json = os.getenv("APP_USERS_JSON", "").strip()
 
     if users_json:
@@ -97,11 +82,11 @@ def logout() -> None:
 
 def require_login() -> bool:
     """
-    Renderiza pantalla de login y retorna True si el usuario ya inició sesión.
-
-    Uso:
-        if not require_login():
-            return
+    Login simple Dual:
+    - Logo con st.image para evitar que se pinte HTML/base64 como texto.
+    - Usuario.
+    - Contraseña.
+    - Botón ingresar.
     """
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
@@ -113,57 +98,134 @@ def require_login() -> bool:
         with st.sidebar:
             st.markdown("---")
             st.caption(f"Sesión iniciada: {st.session_state.get('auth_user', '')}")
+
             if st.button("Cerrar sesión", use_container_width=True):
                 logout()
 
         return True
 
-    left, center, right = st.columns([1, 1.4, 1])
-    with center:
-        if DUAL_LOGO_PURPLE.exists():
-            st.image(str(DUAL_LOGO_PURPLE), use_container_width=True)
-
     st.markdown(
         """
-        <div class="dual-login-wrap">
-            <h2>Acceso privado</h2>
-            <p>
-                Ingresa tus credenciales para acceder al predictor, histórico y evaluación de análisis.
-            </p>
-        </div>
+        <style>
+            header,
+            footer,
+            div[data-testid="stToolbar"],
+            [data-testid="stSidebar"] {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+            }
+
+            .stApp {
+                background:
+                    radial-gradient(circle at 50% 0%, rgba(121, 42, 244, 0.14), transparent 34%),
+                    linear-gradient(180deg, #ffffff 0%, #faf7ff 48%, #ffffff 100%);
+            }
+
+            .block-container {
+                max-width: 420px !important;
+                padding-top: 12vh !important;
+                padding-left: 1.2rem !important;
+                padding-right: 1.2rem !important;
+                padding-bottom: 0 !important;
+            }
+
+            div[data-testid="stImage"] {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 34px;
+            }
+
+            div[data-testid="stImage"] img {
+                max-width: 210px !important;
+                height: auto !important;
+            }
+
+            div[data-testid="stForm"] {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+
+            div[data-testid="stTextInput"] {
+                margin-bottom: 8px !important;
+            }
+
+            div[data-testid="stTextInput"] label {
+                color: #24113f !important;
+                font-size: 14px !important;
+                font-weight: 700 !important;
+            }
+
+            div[data-testid="stTextInput"] input {
+                min-height: 46px !important;
+                border-radius: 14px !important;
+                border: 1px solid rgba(121, 42, 244, 0.28) !important;
+                background: #ffffff !important;
+                color: #24113f !important;
+                box-shadow: 0 10px 28px rgba(121, 42, 244, 0.08) !important;
+            }
+
+            div[data-testid="stTextInput"] input:focus {
+                border: 1px solid #792af4 !important;
+                box-shadow: 0 0 0 3px rgba(121, 42, 244, 0.12) !important;
+            }
+
+            div[data-testid="stFormSubmitButton"] button {
+                min-height: 46px !important;
+                border-radius: 14px !important;
+                background: #792af4 !important;
+                border: 1px solid #792af4 !important;
+                color: #ffffff !important;
+                font-weight: 800 !important;
+                margin-top: 10px !important;
+                box-shadow: 0 14px 34px rgba(121, 42, 244, 0.25) !important;
+            }
+
+            div[data-testid="stFormSubmitButton"] button:hover {
+                background: #6421d4 !important;
+                border-color: #6421d4 !important;
+            }
+
+            div[data-testid="stAlert"] {
+                border-radius: 14px !important;
+                margin-top: 14px !important;
+            }
+
+            @media (max-height: 720px) {
+                .block-container {
+                    padding-top: 7vh !important;
+                    max-width: 390px !important;
+                }
+
+                div[data-testid="stImage"] {
+                    margin-bottom: 22px;
+                }
+
+                div[data-testid="stImage"] img {
+                    max-width: 170px !important;
+                }
+            }
+        </style>
         """,
         unsafe_allow_html=True,
     )
 
+    # Logo Dual. Debe existir en la carpeta assets del proyecto.
+    st.image("assets/dual_logo_purple.png", width=210)
+
     with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Usuario")
-        password = st.text_input("Contraseña", type="password")
+        username = st.text_input("Usuario", placeholder="Ingresa tu usuario")
+        password = st.text_input("Contraseña", type="password", placeholder="Ingresa tu contraseña")
         submitted = st.form_submit_button("Ingresar", use_container_width=True)
 
     if submitted:
         if authenticate_user(username, password):
             st.session_state["authenticated"] = True
             st.session_state["auth_user"] = username.strip()
-            st.success("Inicio de sesión correcto.")
             st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos.")
-
-    with st.expander("Ayuda para configurar usuarios", expanded=False):
-        st.code(
-            """
-# Opción simple en API_KEYS_AQUI.env
-APP_USERNAME=admin
-APP_PASSWORD=tu_contraseña_segura
-
-# Opción recomendada
-APP_USERNAME=admin
-APP_PASSWORD_HASH=sha256_de_tu_contraseña
-
-# Opción multiusuario
-APP_USERS_JSON={"mateo":"hash_sha256_1","deiby":"hash_sha256_2"}
-            """.strip(),
-            language="env",
-        )
 
     return False
