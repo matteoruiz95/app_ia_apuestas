@@ -52,7 +52,6 @@ def _default_users() -> dict[str, str]:
     if password_plain:
         return {username: hash_password(password_plain)}
 
-    # Usuario local de desarrollo. Cámbialo antes de publicar.
     return {"admin": hash_password("admin123")}
 
 
@@ -83,10 +82,8 @@ def logout() -> None:
 def require_login() -> bool:
     """
     Login simple Dual:
-    - Logo con st.image para evitar que se pinte HTML/base64 como texto.
-    - Usuario.
-    - Contraseña.
-    - Botón ingresar.
+    - Logo con st.image para evitar HTML/base64 como texto.
+    - Usuario, contraseña y botón.
     """
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
@@ -212,7 +209,6 @@ def require_login() -> bool:
         unsafe_allow_html=True,
     )
 
-    # Logo Dual. Debe existir en la carpeta assets del proyecto.
     st.image("assets/dual_logo_purple.png", width=210)
 
     with st.form("login_form", clear_on_submit=False):
